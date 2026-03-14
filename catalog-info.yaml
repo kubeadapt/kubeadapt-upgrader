@@ -1,0 +1,92 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: kubeadapt-upgrader
+  description: "Kubeadapt auto-upgrader"
+  annotations:
+    github.com/project-slug: kubeadapt/kubeadapt-upgrader
+    backstage.io/techdocs-ref: dir:.
+    backstage.io/adr-location: docs/adrs
+    backstage.io/source-template: template:default/create-public-service-infra
+    argocd/app-name: kubeadapt-upgrader
+    backstage.io/kubernetes-id: kubeadapt-upgrader
+    backstage.io/kubernetes-namespace: saas
+    terasky.backstage.io/crossplane-cluster: kubeadapt-eks
+    terasky.backstage.io/crossplane-resource: publicserviceinfras.platform.kubeadapt.io
+    terasky.backstage.io/crossplane-version: v2
+    terasky.backstage.io/composite-name: kubeadapt-upgrader-hzbwg
+    terasky.backstage.io/composite-group: platform.kubeadapt.io
+    terasky.backstage.io/composite-version: v1alpha1
+    terasky.backstage.io/composite-plural: publicserviceinfras
+    terasky.backstage.io/composite-kind: PublicServiceInfra
+    terasky.backstage.io/crossplane-scope: Cluster
+    terasky.backstage.io/composition-name: publicserviceinfra-composition
+  tags:
+    - golang
+    - crossplane
+    - kubeadapt
+    - public
+  links:
+    - url: https://github.com/kubeadapt/kubeadapt-upgrader
+      title: GitHub Repository
+      icon: github
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/core
+  system: kubeadapt-platform
+  dependsOn:
+    - resource:default/kubeadapt-upgrader-github-repo
+    - resource:default/kubeadapt-upgrader-ecr-public
+    - resource:default/kubeadapt-upgrader-github-oidc-role
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: kubeadapt-upgrader-github-repo
+  description: "GitHub repository for kubeadapt-upgrader"
+  tags:
+    - github
+    - repository
+    - crossplane
+    - public
+spec:
+  type: github-repository
+  owner: group:default/core
+  system: kubeadapt-platform
+  dependencyOf:
+    - component:default/kubeadapt-upgrader
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: kubeadapt-upgrader-ecr-public
+  description: "ECR Public repository for kubeadapt-upgrader"
+  tags:
+    - ecr-public
+    - aws
+    - crossplane
+    - public
+spec:
+  type: container-registry
+  owner: group:default/core
+  system: kubeadapt-platform
+  dependencyOf:
+    - component:default/kubeadapt-upgrader
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: kubeadapt-upgrader-github-oidc-role
+  description: "GitHub Actions OIDC IAM role for kubeadapt-upgrader CI/CD"
+  tags:
+    - iam
+    - aws
+    - crossplane
+    - public
+spec:
+  type: iam-role
+  owner: group:default/core
+  system: kubeadapt-platform
+  dependencyOf:
+    - component:default/kubeadapt-upgrader
