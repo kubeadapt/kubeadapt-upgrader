@@ -1,0 +1,38 @@
+# Commitizen configuration
+commitizen:
+  name: cz_conventional_commits
+  version: 0.1.0
+  tag_format: $version
+  version_type: semver
+  version_provider: commitizen
+  update_changelog_on_bump: true
+  major_version_zero: true
+
+# Conventional commits settings
+settings:
+  # Allowed commit types
+  allowed_types:
+    - feat
+    - fix
+    - docs
+    - style
+    - refactor
+    - test
+    - chore
+    - build
+    - ci
+    - perf
+    - revert
+
+  # Allowed scopes (generic for any Go service)
+  allowed_scopes:
+    - cmd
+    - docs
+    - ci
+    - deps
+    - security
+    - test
+    - build
+    - internal
+    - api
+    - pkg

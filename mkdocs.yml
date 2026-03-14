@@ -1,0 +1,8 @@
+site_name: Service Documentation
+site_description: Auto-generated documentation site
+
+nav:
+  - Home: index.md
+
+plugins:
+  - techdocs-core

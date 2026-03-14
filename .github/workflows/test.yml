@@ -1,0 +1,23 @@
+name: Test Suite
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - 'mkdocs.yml'
+      - 'site/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  test-suite:
+    uses: kubeadapt/public-actions/.github/workflows/golang-public-test-suite.yml@main
+    with:
+      docker_image_name: ${{ github.event.repository.name }}

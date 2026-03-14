@@ -1,0 +1,41 @@
+# Lefthook configuration
+# Single Go module structure
+
+commit-msg:
+  commands:
+    # Validate conventional commit format using commitizen
+    commitizen:
+      run: cz check --commit-msg-file {1}
+
+pre-commit:
+  parallel: true
+  commands:
+    # TruffleHog secret scanning - CRITICAL & FAST
+    trufflehog:
+      glob: "*"
+      run: NO_COLOR=1 TERM=dumb trufflehog git file://. --since-commit HEAD --only-verified --fail --no-update --no-color
+      stage_fixed: false
+
+    # Go formatting - FAST & AUTO-FIX
+    gofmt:
+      glob: "*.go"
+      run: gofmt -w {staged_files}
+      stage_fixed: true
+
+    # Go imports - FAST & AUTO-FIX
+    goimports:
+      glob: "*.go"
+      run: goimports -w {staged_files}
+      stage_fixed: true
+
+    # golangci-lint - analyze whole project, report only new issues
+    golangci-lint:
+      glob: "*.go"
+      run: golangci-lint run --new-from-rev=HEAD~
+      stage_fixed: false
+
+# pre-push:
+#   commands:
+#     # Run tests with race detector and coverage
+#     test:
+#       run: go test -race -cover ./internal/...

@@ -1,0 +1,178 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  go: "1.26"
+  concurrency: 4
+  # Skip vendor and generated code
+  skip-dirs:
+    - vendor
+    - build
+    - testdata
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*_gen\\.go$"
+
+linters:
+  # Balanced production-quality linters
+  enable:
+    # Core checks (existing)
+    - errcheck      # Check for unchecked errors
+    - govet         # Vet examines Go source code
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Advanced static analysis
+    - unused        # Check for unused code
+    - unconvert     # Remove unnecessary type conversions
+    - misspell      # Spelling errors
+    - goconst       # Repeated strings that could be constants
+
+    # Security
+    - gosec         # Security problems
+
+    # Bugs & Errors
+    - bodyclose     # HTTP response body closed
+    - errchkjson    # Check JSON encode/decode errors
+    - nilerr        # Find nil errors being returned
+    - errorlint     # Error wrapping issues (Go 1.13+)
+
+    # Performance
+    - prealloc      # Find slice declarations that could be preallocated
+
+    # Style & Code Quality
+    - revive        # Fast, configurable, extensible linter
+    - whitespace    # Detect unnecessary whitespace
+
+    # Context & Concurrency
+    - contextcheck  # Check context.Context usage
+
+  disable:
+    # Disable noisy or opinionated linters
+    - wrapcheck     # Too strict for most codebases
+    - varnamelen    # Variable name length checks (too opinionated)
+    - gocyclo       # Cyclomatic complexity (covered by gocognit if needed)
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: false
+      # Ignore common safe functions
+      exclude-functions:
+        - (io.Closer).Close
+        - (*database/sql.Rows).Close
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment  # Too strict for most cases
+        - shadow          # Can be noisy
+
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+      ignore-tests: true
+
+    misspell:
+      locale: US
+
+    gosec:
+      # Exclude specific security checks if needed
+      excludes:
+        # - G104  # Audit errors not checked (covered by errcheck)
+      severity: high
+      confidence: medium
+
+    revive:
+      # Minimal revive config (not too opinionated)
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: increment-decrement
+        - name: var-naming
+        - name: package-comments
+          disabled: true  # Often too strict
+        - name: range
+        - name: receiver-naming
+        - name: indent-error-flow
+        - name: superfluous-else
+        - name: unreachable-code
+
+  exclusions:
+    generated: lax
+
+    rules:
+      # Test files - relax rules
+      - path: _test\.go
+        linters:
+          - errcheck      # Allow unchecked errors in tests
+          - gosec         # Allow security issues in tests
+          - goconst       # Repeated strings OK in tests
+          - revive        # Style less important in tests
+
+      # Exclude long test functions
+      - path: _test\.go
+        text: "Function .* is too long"
+        linters:
+          - revive
+
+      # Exclude TODO comments in development
+      - linters:
+          - godox
+        text: "TODO"
+
+issues:
+  # Show all issues
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  # Report only new issues compared to HEAD
+  new-from-rev: HEAD
+
+  # Exclude common false positives
+  exclude-rules:
+    # Exclude some staticcheck messages
+    - linters:
+        - staticcheck
+      text: "SA1019:"  # Deprecated function usage (sometimes unavoidable)
+
+    # Exclude gosec G104 for specific cases (covered by errcheck)
+    - linters:
+        - gosec
+      text: "G104:"
+      path: _test\.go
+
+severity:
+  default: error
+
+  rules:
+    # Security issues are high severity
+    - linters:
+        - gosec
+      severity: high
+
+    # Style issues are warnings
+    - linters:
+        - whitespace
+        - misspell
+      severity: warning
+
+    # Code quality issues
+    - linters:
+        - revive
+        - goconst
+      severity: warning
+
+output:
+  formats:
+    text:
+      print-linter-name: true
+      print-issued-lines: true
+  sort-order:
+    - severity
+    - linter
+    - file

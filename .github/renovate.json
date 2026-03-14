@@ -1,0 +1,67 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":dependencyDashboard",
+    "group:monorepos",
+    "group:recommended"
+  ],
+  "schedule": ["before 6am on monday"],
+  "timezone": "Europe/Istanbul",
+  "prConcurrentLimit": 5,
+  "prCreation": "not-pending",
+  "prHourlyLimit": 2,
+  "packageRules": [
+    {
+      "description": "Automerge minor and patch updates",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true,
+      "automergeType": "pr",
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Require manual approval for major updates",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["major-update", "dependencies"]
+    },
+    {
+      "description": "Group Go module updates",
+      "matchManagers": ["gomod"],
+      "groupName": "Go dependencies",
+      "labels": ["go", "dependencies"]
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "labels": ["github-actions", "dependencies"],
+      "automerge": true,
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Group Docker base image updates",
+      "matchManagers": ["dockerfile"],
+      "groupName": "Docker base images",
+      "labels": ["docker", "dependencies"]
+    },
+    {
+      "description": "Pin GitHub Actions to commit SHA for security",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true
+    }
+  ],
+  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
+  "rangeStrategy": "bump",
+  "labels": ["renovate", "dependencies"],
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageAction": "update",
+  "commitMessageTopic": "{{depName}}",
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "assignees": ["ugurcancaykara"]
+  },
+  "ignoreDeps": [],
+  "customManagers": []
+}
