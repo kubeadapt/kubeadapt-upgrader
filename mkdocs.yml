@@ -1,5 +1,5 @@
-site_name: Service Documentation
-site_description: Auto-generated documentation site
+site_name: kubeadapt-upgrader
+site_description: In-cluster Helm upgrade operator for the Kubeadapt platform
 
 nav:
   - Home: index.md

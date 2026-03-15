@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chartmuseum
+  namespace: kubeadapt-system
+  labels:
+    app: chartmuseum
+    app.kubernetes.io/part-of: kubeadapt-e2e
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chartmuseum
+  template:
+    metadata:
+      labels:
+        app: chartmuseum
+        app.kubernetes.io/part-of: kubeadapt-e2e
+    spec:
+      containers:
+      - name: chartmuseum
+        image: ghcr.io/helm/chartmuseum:v0.16.2
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: STORAGE
+          value: "local"
+        - name: STORAGE_LOCAL_ROOTDIR
+          value: "/tmp/charts"
+        - name: DISABLE_API
+          value: "false"
+        - name: ALLOW_OVERWRITE
+          value: "true"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chartmuseum
+  namespace: kubeadapt-system
+  labels:
+    app: chartmuseum
+    app.kubernetes.io/part-of: kubeadapt-e2e
+spec:
+  type: NodePort
+  selector:
+    app: chartmuseum
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30083
+    protocol: TCP
