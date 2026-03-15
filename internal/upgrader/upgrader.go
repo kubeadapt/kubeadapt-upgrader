@@ -45,10 +45,9 @@ func New(
 ) *Upgrader {
 	logger = logger.With(zap.String("component", "upgrader"))
 
-	// Detect platform
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	detectedPlatform := platform.DetectPlatform(ctx)
+	detectedPlatform := platform.DetectPlatform(ctx, k8sClientset)
 
 	logger.Info("Platform detected",
 		zap.String("platform", detectedPlatform.String()))

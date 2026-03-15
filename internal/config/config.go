@@ -57,10 +57,7 @@ func LoadFromEnv() (*Config, error) {
 	cfg := DefaultConfig()
 
 	// Required fields
-	cfg.BackendAPIEndpoint = os.Getenv("KUBEADAPT_BACKEND_URL")
-	if cfg.BackendAPIEndpoint == "" {
-		return nil, fmt.Errorf("KUBEADAPT_BACKEND_URL is required")
-	}
+	cfg.BackendAPIEndpoint = getEnvOrDefault("KUBEADAPT_BACKEND_URL", "https://agent.kubeadapt.io")
 
 	cfg.AgentToken = os.Getenv("KUBEADAPT_AGENT_TOKEN")
 	if cfg.AgentToken == "" {

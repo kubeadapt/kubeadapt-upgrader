@@ -42,41 +42,28 @@ func TestDefaultConfig(t *testing.T) {
 }
 
 func TestLoadFromEnv_RequiredFields(t *testing.T) {
-	// Clear all env vars first
 	os.Clearenv()
 
+	// KUBEADAPT_AGENT_TOKEN is first required field (backend URL has default)
 	_, err := LoadFromEnv()
-	if err == nil {
-		t.Error("expected error for missing KUBEADAPT_BACKEND_URL")
-	}
-
-	os.Setenv("KUBEADAPT_BACKEND_URL", "https://api.kubeadapt.io")
-
-	// Test missing KUBEADAPT_AGENT_TOKEN
-	_, err = LoadFromEnv()
 	if err == nil {
 		t.Error("expected error for missing KUBEADAPT_AGENT_TOKEN")
 	}
 
-	// Set KUBEADAPT_AGENT_TOKEN
 	os.Setenv("KUBEADAPT_AGENT_TOKEN", "test-token")
 
-	// Test missing POD_NAME
 	_, err = LoadFromEnv()
 	if err == nil {
 		t.Error("expected error for missing POD_NAME")
 	}
 
-	// Set POD_NAME
 	os.Setenv("POD_NAME", "test-pod")
 
-	// Test missing POD_NAMESPACE
 	_, err = LoadFromEnv()
 	if err == nil {
 		t.Error("expected error for missing POD_NAMESPACE")
 	}
 
-	// Set POD_NAMESPACE - now should succeed
 	os.Setenv("POD_NAMESPACE", "kubeadapt")
 
 	cfg, err := LoadFromEnv()
@@ -84,8 +71,8 @@ func TestLoadFromEnv_RequiredFields(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	if cfg.BackendAPIEndpoint != "https://api.kubeadapt.io" {
-		t.Errorf("expected BackendAPIEndpoint=https://api.kubeadapt.io, got %v", cfg.BackendAPIEndpoint)
+	if cfg.BackendAPIEndpoint != "https://agent.kubeadapt.io" {
+		t.Errorf("expected default BackendAPIEndpoint=https://agent.kubeadapt.io, got %v", cfg.BackendAPIEndpoint)
 	}
 	if cfg.AgentToken != "test-token" {
 		t.Errorf("expected AgentToken=test-token, got %v", cfg.AgentToken)
@@ -95,6 +82,23 @@ func TestLoadFromEnv_RequiredFields(t *testing.T) {
 	}
 	if cfg.PodNamespace != "kubeadapt" {
 		t.Errorf("expected PodNamespace=kubeadapt, got %v", cfg.PodNamespace)
+	}
+}
+
+func TestLoadFromEnv_BackendURLOverride(t *testing.T) {
+	os.Clearenv()
+	os.Setenv("KUBEADAPT_BACKEND_URL", "https://custom.example.com")
+	os.Setenv("KUBEADAPT_AGENT_TOKEN", "t")
+	os.Setenv("POD_NAME", "p")
+	os.Setenv("POD_NAMESPACE", "ns")
+
+	cfg, err := LoadFromEnv()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if cfg.BackendAPIEndpoint != "https://custom.example.com" {
+		t.Errorf("expected override https://custom.example.com, got %v", cfg.BackendAPIEndpoint)
 	}
 }
 

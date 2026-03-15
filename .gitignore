@@ -46,3 +46,4 @@ todo*
 tests/e2e/e2e-logs/
 
 bin
+upgrader

@@ -6,6 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "github.com/KimMachineGun/automemlimit"
+	_ "go.uber.org/automaxprocs"
+
 	"github.com/kubeadapt/kubeadapt-upgrader/internal/backend"
 	"github.com/kubeadapt/kubeadapt-upgrader/internal/config"
 	"github.com/kubeadapt/kubeadapt-upgrader/internal/upgrader"
