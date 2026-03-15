@@ -1,11 +1,10 @@
 package platform
 
 import (
-	"context"
-	"net/http"
-	"net/http/httptest"
 	"testing"
-	"time"
+
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestPlatformString(t *testing.T) {
@@ -28,73 +27,70 @@ func TestPlatformString(t *testing.T) {
 	}
 }
 
-func TestDetectPlatform_OnPremise(t *testing.T) {
-	// Without any mock servers, all checks will fail, returning on-premise
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
+func TestDetectFromNode_ProviderID(t *testing.T) {
+	testCases := []struct {
+		name       string
+		providerID string
+		expected   Platform
+	}{
+		{"aws", "aws://us-east-1/i-0abc123", PlatformEKS},
+		{"azure", "azure:///subscriptions/sub-id/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm", PlatformAKS},
+		{"gce", "gce://my-project/us-central1-a/my-instance", PlatformGKE},
+		{"unknown provider", "digitalocean://droplet-123", PlatformOnPremise},
+		{"empty", "", PlatformOnPremise},
+	}
 
-	platform := DetectPlatform(ctx)
-
-	if platform != PlatformOnPremise {
-		t.Errorf("expected on-premise, got %v", platform)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			node := &v1.Node{
+				Spec: v1.NodeSpec{ProviderID: tc.providerID},
+			}
+			result := DetectFromNode(node)
+			if result != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, result)
+			}
+		})
 	}
 }
 
-func TestIsAWS(t *testing.T) {
-	// Create mock AWS metadata server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/latest/meta-data/" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		w.WriteHeader(http.StatusNotFound)
-	}))
-	defer server.Close()
+func TestDetectFromNode_Labels(t *testing.T) {
+	testCases := []struct {
+		name     string
+		labels   map[string]string
+		expected Platform
+	}{
+		{"eks nodegroup label", map[string]string{"eks.amazonaws.com/nodegroup": "ng-1"}, PlatformEKS},
+		{"eks capacity label", map[string]string{"eks.amazonaws.com/capacityType": "ON_DEMAND"}, PlatformEKS},
+		{"gke nodepool label", map[string]string{"cloud.google.com/gke-nodepool": "default-pool"}, PlatformGKE},
+		{"aks agentpool label", map[string]string{"kubernetes.azure.com/agentpool": "nodepool1"}, PlatformAKS},
+		{"no labels", map[string]string{}, PlatformOnPremise},
+		{"nil labels", nil, PlatformOnPremise},
+		{"unrelated labels", map[string]string{"app": "test"}, PlatformOnPremise},
+	}
 
-	// We can't easily test isAWS directly since it uses hardcoded IP
-	// But we can verify the function logic via DetectPlatform with mocks
-
-	// Instead, test that on-premise is returned when server is unavailable
-	client := &http.Client{Timeout: 100 * time.Millisecond}
-	ctx := context.Background()
-
-	// Test with unavailable endpoint
-	result := isAWS(ctx, client)
-	if result {
-		t.Error("expected isAWS=false when endpoint is unavailable")
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			node := &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{Labels: tc.labels},
+			}
+			result := DetectFromNode(node)
+			if result != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, result)
+			}
+		})
 	}
 }
 
-func TestIsAzure(t *testing.T) {
-	// Test with unavailable endpoint
-	client := &http.Client{Timeout: 100 * time.Millisecond}
-	ctx := context.Background()
-
-	result := isAzure(ctx, client)
-	if result {
-		t.Error("expected isAzure=false when endpoint is unavailable")
+func TestDetectFromNode_ProviderIDTakesPrecedence(t *testing.T) {
+	node := &v1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: map[string]string{"kubernetes.azure.com/agentpool": "pool1"},
+		},
+		Spec: v1.NodeSpec{ProviderID: "aws://us-east-1/i-123"},
 	}
-}
 
-func TestIsGCP(t *testing.T) {
-	// Test with unavailable endpoint
-	client := &http.Client{Timeout: 100 * time.Millisecond}
-	ctx := context.Background()
-
-	result := isGCP(ctx, client)
-	if result {
-		t.Error("expected isGCP=false when endpoint is unavailable")
-	}
-}
-
-func TestDetectPlatform_ContextCanceled(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel() // Cancel immediately
-
-	platform := DetectPlatform(ctx)
-
-	// Should return on-premise since all checks fail
-	if platform != PlatformOnPremise {
-		t.Errorf("expected on-premise for canceled context, got %v", platform)
+	result := DetectFromNode(node)
+	if result != PlatformEKS {
+		t.Errorf("expected providerID (eks) to take precedence over labels (aks), got %v", result)
 	}
 }
