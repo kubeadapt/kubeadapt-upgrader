@@ -33,14 +33,14 @@ func TestCreateUpgradeJob_OCIRepo(t *testing.T) {
 	require.NotEmpty(t, command)
 
 	// Expected command for OCI:
-	// helm upgrade --install --atomic --wait --reuse-values --timeout 10m0s --version 0.18.0 kubeadapt oci://...
+	// helm upgrade --install --atomic --wait --reset-then-reuse-values --timeout 10m0s --version 0.18.0 kubeadapt oci://...
 	expectedCommand := []string{
 		"helm",
 		"upgrade",
 		"--install",
 		"--atomic",
 		"--wait",
-		"--reuse-values",
+		"--reset-then-reuse-values",
 		"--timeout", "10m0s",
 		"--version", "0.18.0",
 		"kubeadapt",
@@ -76,14 +76,14 @@ func TestCreateUpgradeJob_HTTPRepo(t *testing.T) {
 	require.NotEmpty(t, command)
 
 	// Expected command for HTTP:
-	// helm upgrade --install --atomic --wait --reuse-values --timeout 10m0s --version 0.18.0 kubeadapt kubeadapt --repo http://chartmuseum:8080
+	// helm upgrade --install --atomic --wait --reset-then-reuse-values --timeout 10m0s --version 0.18.0 kubeadapt kubeadapt --repo http://chartmuseum:8080
 	expectedCommand := []string{
 		"helm",
 		"upgrade",
 		"--install",
 		"--atomic",
 		"--wait",
-		"--reuse-values",
+		"--reset-then-reuse-values",
 		"--timeout", "10m0s",
 		"--version", "0.18.0",
 		"kubeadapt",
@@ -132,14 +132,14 @@ func TestCreateUpgradeJob_HTTPSRepo(t *testing.T) {
 	require.NotEmpty(t, command)
 
 	// Expected command for HTTPS:
-	// helm upgrade --install --atomic --wait --reuse-values --timeout 10m0s --version 0.18.0 kubeadapt kubeadapt --repo https://charts.example.com
+	// helm upgrade --install --atomic --wait --reset-then-reuse-values --timeout 10m0s --version 0.18.0 kubeadapt kubeadapt --repo https://charts.example.com
 	expectedCommand := []string{
 		"helm",
 		"upgrade",
 		"--install",
 		"--atomic",
 		"--wait",
-		"--reuse-values",
+		"--reset-then-reuse-values",
 		"--timeout", "10m0s",
 		"--version", "0.18.0",
 		"kubeadapt",

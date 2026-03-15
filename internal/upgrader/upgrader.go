@@ -149,7 +149,6 @@ func (u *Upgrader) checkLoop(ctx context.Context) {
 	ticker := time.NewTicker(u.cfg.UpgradeCheckInterval)
 	defer ticker.Stop()
 
-	// Initial check timer
 	initialTimer := time.NewTimer(initialDelay)
 	defer initialTimer.Stop()
 
@@ -164,14 +163,14 @@ func (u *Upgrader) checkLoop(ctx context.Context) {
 			return
 
 		case <-initialTimer.C:
-			// Perform initial check
 			u.logger.Info("Performing initial upgrade check")
 			u.runCheck(ctx)
+			ticker.Reset(u.cfg.UpgradeCheckInterval)
 
 		case <-ticker.C:
-			// Periodic check
 			u.logger.Debug("Performing periodic upgrade check")
 			u.runCheck(ctx)
+			ticker.Reset(u.cfg.UpgradeCheckInterval)
 		}
 	}
 }
