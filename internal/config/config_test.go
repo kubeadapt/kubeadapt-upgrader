@@ -45,14 +45,12 @@ func TestLoadFromEnv_RequiredFields(t *testing.T) {
 	// Clear all env vars first
 	os.Clearenv()
 
-	// Test missing KUBEADAPT_BACKEND_API_ENDPOINT
 	_, err := LoadFromEnv()
 	if err == nil {
-		t.Error("expected error for missing KUBEADAPT_BACKEND_API_ENDPOINT")
+		t.Error("expected error for missing KUBEADAPT_BACKEND_URL")
 	}
 
-	// Set KUBEADAPT_BACKEND_API_ENDPOINT
-	os.Setenv("KUBEADAPT_BACKEND_API_ENDPOINT", "https://api.kubeadapt.io")
+	os.Setenv("KUBEADAPT_BACKEND_URL", "https://api.kubeadapt.io")
 
 	// Test missing KUBEADAPT_AGENT_TOKEN
 	_, err = LoadFromEnv()
@@ -103,7 +101,7 @@ func TestLoadFromEnv_RequiredFields(t *testing.T) {
 func TestLoadFromEnv_AllFields(t *testing.T) {
 	// Set up all environment variables
 	os.Clearenv()
-	os.Setenv("KUBEADAPT_BACKEND_API_ENDPOINT", "https://api.test.io")
+	os.Setenv("KUBEADAPT_BACKEND_URL", "https://api.test.io")
 	os.Setenv("KUBEADAPT_AGENT_TOKEN", "token123")
 	os.Setenv("POD_NAME", "upgrader-pod")
 	os.Setenv("POD_NAMESPACE", "test-ns")
