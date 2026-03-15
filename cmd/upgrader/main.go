@@ -5,12 +5,14 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	_ "github.com/KimMachineGun/automemlimit"
 	_ "go.uber.org/automaxprocs"
 
 	"github.com/kubeadapt/kubeadapt-upgrader/internal/backend"
 	"github.com/kubeadapt/kubeadapt-upgrader/internal/config"
+	"github.com/kubeadapt/kubeadapt-upgrader/internal/health"
 	"github.com/kubeadapt/kubeadapt-upgrader/internal/upgrader"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -73,14 +75,18 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Start the upgrader
+	healthSrv := health.NewServer(cfg.HealthPort, logger)
+	if err := healthSrv.Start(); err != nil {
+		logger.Fatal("Failed to start health server", zap.Error(err))
+	}
+
 	if err := upg.Start(ctx); err != nil {
 		logger.Fatal("Failed to start upgrader", zap.Error(err))
 	}
 
+	healthSrv.SetReady()
 	logger.Info("Upgrader started successfully")
 
-	// Wait for shutdown signal
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
 
@@ -90,9 +96,14 @@ func main() {
 	// Cancel context to signal all goroutines to stop
 	cancel()
 
-	// Stop the upgrader gracefully
 	if err := upg.Stop(); err != nil {
 		logger.Error("Error stopping upgrader", zap.Error(err))
+	}
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	if err := healthSrv.Stop(shutdownCtx); err != nil {
+		logger.Error("Health server shutdown error", zap.Error(err))
 	}
 
 	logger.Info("kubeadapt-upgrader shutdown complete")
