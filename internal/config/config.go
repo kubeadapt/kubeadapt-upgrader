@@ -32,7 +32,8 @@ type Config struct {
 	ChartRepo            string
 	UpgradeInitialDelay  time.Duration
 
-	// Logging
+	HealthPort int
+
 	LogLevel string
 }
 
@@ -48,6 +49,7 @@ func DefaultConfig() *Config {
 		UpgradeJobImage:      "alpine/helm:3.14.3",
 		ChartRepo:            "oci://ghcr.io/kubeadapt/kubeadapt-helm/kubeadapt",
 		UpgradeInitialDelay:  1 * time.Minute,
+		HealthPort:           8081,
 		LogLevel:             "info",
 	}
 }
@@ -89,7 +91,8 @@ func LoadFromEnv() (*Config, error) {
 	cfg.ChartRepo = getEnvOrDefault("KUBEADAPT_UPGRADE_CHART_REPO", "oci://ghcr.io/kubeadapt/kubeadapt-helm/kubeadapt")
 	cfg.UpgradeInitialDelay = getEnvDuration("KUBEADAPT_UPGRADE_INITIAL_DELAY", 1*time.Minute)
 
-	// Logging
+	cfg.HealthPort = getEnvInt("KUBEADAPT_HEALTH_PORT", 8081)
+
 	cfg.LogLevel = getEnvOrDefault("LOG_LEVEL", "info")
 
 	return cfg, nil
@@ -125,6 +128,18 @@ func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
 	}
 
 	parsed, err := time.ParseDuration(value)
+	if err != nil {
+		return defaultValue
+	}
+	return parsed
+}
+
+func getEnvInt(key string, defaultValue int) int {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	parsed, err := strconv.Atoi(value)
 	if err != nil {
 		return defaultValue
 	}
