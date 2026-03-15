@@ -60,7 +60,7 @@ func CreateUpgradeJob(
 		"--install",
 		"--atomic",
 		"--wait",
-		"--reuse-values",
+		"--reset-then-reuse-values",
 		"--timeout", upgradeTimeout.String(),
 		"--version", targetVersion,
 	}
