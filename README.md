@@ -7,7 +7,7 @@ In-cluster Helm upgrade operator for the [Kubeadapt](https://kubeadapt.io) platf
 - Polls the Kubeadapt backend for available Helm chart updates and applies them automatically
 - Supports upgrade policies (minor, patch, all) and channels (stable, fast) with dry-run mode
 - Uses distributed locking to prevent concurrent upgrades across multiple pods
-- Multi-cloud aware: detects AWS, GCP, and Azure at startup for platform-specific upgrade paths
+- Multi-cloud aware: detects AWS, GCP, and Azure at startup via node providerID for platform-specific upgrade paths
 
 ## Quick Start
 
@@ -16,17 +16,18 @@ Install via Helm from the [kubeadapt-helm](https://github.com/kubeadapt/kubeadap
 ```bash
 helm repo add kubeadapt https://kubeadapt.github.io/kubeadapt-helm
 helm install kubeadapt kubeadapt/kubeadapt \
-  --set agent.apiKey=<KUBEADAPT_API_KEY> \
-  --set upgrader.enabled=true
+  --namespace kubeadapt \
+  --create-namespace \
+  --set agent.config.token=<YOUR_TOKEN> \
+  --set agent.autoUpgrade.enabled=true
 ```
 
-The upgrader is deployed as part of the Kubeadapt Helm chart. Set `upgrader.enabled=true` and configure your upgrade policy through Helm values.
+The upgrader is deployed as a sidecar container in the agent pod. Set `agent.autoUpgrade.enabled=true` and configure your upgrade policy through Helm values.
 
 ## Documentation
 
-Full documentation is in the `docs/` directory:
-
-- [Overview](docs/index.md) - what the upgrader does, architecture, and upgrade lifecycle
+- [Overview](docs/index.md) - architecture, upgrade lifecycle, and configuration reference
+- [Public docs](https://kubeadapt.io/docs/v1/configuration/auto-upgrade/) - user-facing auto-upgrade guide
 
 ## Development
 
